@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/white.css">
+    <link rel="stylesheet" href="plugin/highlight/styles/googlecode.css">
+    <!-- Load my custom stuff last to override -->
+    <link rel="stylesheet" href="css/custom.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+      {% block slides %}
+      {% endblock %}
+      </div>
+    </div>
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        dependencies: [
+          // Cross-browser shim that fully implements classList - https://github.com/eligrey/classList.js/
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+
+          // Interpret Markdown in <section> elements
+          { src: 'plugin/markdown/marked.js', condition: function() {
+            return !!document.querySelector( '[data-markdown]' );
+          } },
+          { src: 'plugin/markdown/markdown.js', condition: function() {
+            return !!document.querySelector( '[data-markdown]' );
+          } },
+
+          // Syntax highlight for <code> elements
+          { src: 'plugin/highlight/highlight.pack.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+
+          // Zoom in and out with Alt+click
+          // { src: 'plugin/zoom-js/zoom.js', async: true },
+
+          // Speaker notes
+          { src: 'plugin/notes/notes.js', async: true },
+
+          // MathJax
+          // { src: 'plugin/math/math.js', async: true }
+
+          // Chalkboard Plugin
+          { src: 'plugin/chalkboard/chalkboard.js' },
+        ],
+        // Chalkboard shortcuts
+        keyboard: {
+          67: function() { RevealChalkboard.toggleNotesCanvas() },    // toggle notes canvas when 'c' is pressed
+          66: function() { RevealChalkboard.toggleChalkboard() }, // toggle chalkboard when 'b' is pressed
+          46: function() { RevealChalkboard.clear() },    // clear chalkboard when 'DEL' is pressed
+           8: function() { RevealChalkboard.reset() },    // reset chalkboard data on current slide when 'BACKSPACE' is pressed
+          68: function() { RevealChalkboard.download() }, // downlad recorded chalkboard drawing when 'd' is pressed
+      },
+      // Switch Chalkboard to Whiteboard
+      chalkboard: {
+        theme: "whiteboard",
+        readOnly: false,
+      },
+      });
+    </script>
+  </body>
+</html>

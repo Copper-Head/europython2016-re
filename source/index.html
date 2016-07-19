@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+{% import "utils.html" as utils %}
+{% import "snippets.html" as snippets %}
+
+{% block slides %}
+  <!-- Title Slide -->
+  <section>
+    <h1> <var>re</var>-Discovering Python's Regular Expressions</h1>
+    <p>
+      Ilia Kurenkov
+    </p>
+    <p>
+      {{ utils.email("ilia.kurenkov@gmail.com") }}
+    </p>
+  </section>
+  <!-- Introduce Me -->
+  <section>
+    {{ utils.slide_header("Who am I?")}}
+    <ul>
+      <li>
+        <div class="img-right">
+          MS Cognitive Systems (in progress)
+          {{ utils.image_no_bdr("images/2000px-Uni_Potsdam_logo.svg.png", scale="15%")}}
+        </div>
+      </li>
+      <li>OSS contributions: NLTK, CPython, matplotlib</li>
+      <li>
+        <div class="img-right">
+          eGym (working student)
+          {{ utils.image_no_bdr("images/eGym.svg", scale="25%")}}
+        </div>
+      </li>
+    </ul>
+
+  </section>
+  <!-- Introduce Topic -->
+  <section>
+    {{ utils.slide_header("What is this talk about?")}}
+    <h5 style="text-align: left">Inspiration:</h5>
+    <p>
+      <em>Python's Hidden Regular Expression Gems</em> by Armin Ronacher
+    </p>
+    <div class="fragment">
+      <h5 style="text-align: left">Structure:</h5>
+      <ul>
+        <li>
+          Brief history of the module
+        </li>
+        <li>
+          To compile or not to compile?
+        </li>
+        <li><code>re</code>'s flags</li>
+        <li>match object interface</li>
+      </ul>
+    </div>
+    {{ utils.notes_md("
+      AR: pocoo, ie flask, jinja2
+
+      using undocumented Scanner class for lexers
+    ")}}
+  </section>
+  <!-- Timeline -->
+  <section>
+    {{ utils.slide_header("A Brief History")}}
+    <ul>
+      <li>
+        <code>regex</code> module - like awk/egrep
+      </li>
+      <li>
+        Python 1.5: <code>re</code> module with <code>pre</code> backend.
+      </li>
+      <li>
+        Python 2.0: <code>pre</code> replaced by <code>sre</code>.
+      </li>
+      <li>
+        minor tweaks: unicode support, fixes
+      </li>
+      <li class="fragment">
+        2008-2011: failed comeback of <code>regex</code> module
+      </li>
+    </ul>
+    {{ utils.notes_md("
+    Actually, current is 3rd take
+
+    Bottom line: it's old, before the formatting PEPs
+
+    C component and Py component, HARD to tell which is which
+
+    We will also see another quirk later
+    ")}}
+  </section>
+  <!-- search for god -->
+  <section>
+    {{ utils.slide_header("Let's search for God!")}}
+    <div class="fragment img-right" style="display: inline-block">
+      <div style="display: inline-block">
+      <p> King James Bible </p>
+      <ul>
+        <li>free to download</li>
+        <li>only 4MB text file</li>
+      </ul>
+      </div>
+      {{ utils.image_no_bdr("images/kjb-first-edition-titlepage.png", scale="25%")}}
+    </div>
+    <pre class="fragment"><code data-trim>
+      import re
+      re.search("God", kj_bible)
+    </code></pre>
+    {{
+    utils.notes_md("
+    Say we got some results. That's cool
+
+    But we want to compare with other bibles!
+    ") }}
+  </section>
+  <!-- What of other bibles? Naive multiple search -->
+  <section>
+    {{ utils.slide_header("Expanding the Search")}}
+    {{ snippets.naive_multiple_search() }}
+  </section>
+  <!-- We can do better: reuse patterns! -->
+  <section>
+    {{ utils.slide_header("Reusing Patterns") }}
+    <div>{{ snippets.pattern_str_reuse() }}</div>
+    <div class="fragment">{{ snippets.pattern_obj_reuse() }}</div>
+    {{ utils.notes_md("
+    We could save the string, reuse that
+
+    OR compile to pattern obj
+    ")}}
+  </section>
+  <!-- Why Compile? -->
+  <section>
+    {{ utils.slide_header("Why compile?")}}
+    <ul>
+      <li class="fragment">
+      You can change search scope:
+      <pre><code> pattern_obj.search('some long string', start_pos, end_pos) </code></pre>
+      </li>
+      <li class="fragment">
+        Readability.
+      </li>
+      <li class="fragment">
+        It's faster. <div class="fragment"><em>Or is it?</em></div>
+      </li>
+    </ul>
+  </section>
+  <!-- Compilation faster? -->
+  <section>
+    {{ utils.slide_header("Is <code>re.compile</code> faster?")}}
+    <!-- The speed claim -->
+    <section>
+      <div class="fragment">
+        <h5>Slower</h5>
+        {{ snippets.pattern_str_reuse() }}
+      </div>
+      <div class="fragment">
+        <h5>Faster</h5>
+        {{ snippets.pattern_obj_reuse() }}
+      </div>
+      {{ utils.notes_md("
+        Let's investigate this claim using the implementation
+      ")}}
+    </section>
+    <!-- re.search uses re._compile! -->
+    <section>
+      {{ utils.image_no_bdr("images/re.search.svg") }}
+      {{ utils.image_no_bdr("images/re.compile.svg", classes="fragment") }}
+      {{ utils.notes_md("
+      What does basic search do?
+
+      Seems like the answer is clear... until we look at _compile!
+      ")}}
+    </section>
+    <!-- _compile uses cache! -->
+    <section>
+      {{ utils.image_no_bdr("images/re._compile.svg") }}
+
+      <div class="fragment">
+        {{ snippets.pattern_str_reuse() }}
+      </div>
+
+      {{ utils.notes_md("
+      _compile uses cache!
+
+      In the second re.search it hits the cache
+
+      Of course it's less reliable
+      ")}}
+    </section>
+    <!-- Takeaway -->
+    <section>
+      <ul>
+        <li class="fragment">
+          <em>No</em> speed benefit if cache gets hit
+        </li>
+        <li class="fragment">
+          Slightly faster if cache is cleared
+        </li>
+        <li class="fragment">
+          For real speedup: optimize the <em>regular expressions</em>!
+        </li>
+      </ul>
+      {{ utils.notes_md("
+      So we compile, live happily ever after
+
+      re.purge()
+      ")}}
+    </section>
+  </section>
+  <!-- Flags! -->
+  <section>
+    <!-- <h3>How to handle this?</h3> -->
+    <blockquote>
+      Who am I, O Lord <mark>GOD</mark>?
+      and what is my house, that thou hast brought me hitherto?
+    </blockquote>
+    <div class="fragment">
+    <h5>Solution:</h5>
+    {{ snippets.re_I_ex() }}
+    </div>
+    {{ utils.notes_md("
+    One day you are skimming the bible
+
+    My regex don't catch that!
+    ")}}
+  </section>
+  <section>
+    <!-- <h2>Flags</h2> -->
+    <section>
+      {{ utils.slide_header("What is <code>re.IGNORECASE</code>?")}}
+      {{ snippets.re_flags_explore() }}
+      {{ utils.notes_md("
+      - Do we all know what that is?
+      - At first this didn't strike me as weird, then I thought about it
+        for a while...
+      - How often do you use this?
+      ")}}
+    </section>
+    <!-- Bit-arrays explained -->
+    <section>
+      {{ snippets.binary_printer() }}
+      {{ snippets.re_I_8bit() }}
+      {{ snippets.two_flags_8bit() }}
+    </section>
+  </section>
+  <!-- Flags are rare in Python -->
+  <section>
+    {{ utils.slide_header("Intuition: bit array flags are uncommon!")}}
+    <div class="img-right">
+      <div class="fragment">
+        {{ utils.image_no_bdr("images/08-cat-computer-superJumbo.jpg", scale="40%")}}
+        <p>
+          Validate by checking Standard Library
+        </p>
+      </div>
+      <p class="fragment">
+        <em>Only 2</em> of ~240 standard lib modules!!
+      </p>
+    </div>
+    <aside class="notes" data-markdown>
+      Also interesting: what kind of modules/funcs use these flags
+
+      Not a CS major, I find this cute
+    </aside>
+  </section>
+  <!-- Match Objects -->
+  <section>
+    {{ utils.slide_header("Match Objects")}}
+    <ul>
+      <li class="fragment">Not saying anything new</li>
+      <li class="fragment">No gotchas, the docs are clear...</li>
+      <li class="fragment">... but somehow not memorable</li>
+      <li class="fragment">How to avoid this:
+      {{ snippets.bad_groups_uses() }}
+      </li>
+      <li class="fragment">Simple succinct rule of thumb</li>
+    </ul>
+  </section>
+  <!-- example match objects -->
+  <section>
+    {{ utils.slide_header("An Example") }}
+    {{ snippets.match_obj_example() }}
+    <ul>
+      <li class="fragment">Give me the whole matched string</li>
+      <li class="fragment">Give me one sub-group match.</li>
+      <li class="fragment">Give me all sub-group matches.</li>
+    </ul>
+    {{ utils.notes_md("
+    total match includes stuff outside of patterns
+    ")}}
+  </section>
+  <!-- Give me total matched string -->
+  <section>
+    {{ utils.slide_header("The Total Match")}}
+
+    {{ snippets.total_match() }}
+
+  </section>
+  <!-- Give me individual groups! -->
+  <section>
+    {{ utils.slide_header("Individual Subgroups")}}
+
+    {{ snippets.individual_submatches() }}
+    {{ utils.notes_md("
+    Still use .group
+
+    But with other indices
+
+    Or with names!")}}
+  </section>
+  <!-- Give me ALL the groups! -->
+  <section>
+    {{ utils.slide_header("All the Subgroups")}}
+    {{ snippets.all_subgroups() }}
+  </section>
+  <!-- Recap -->
+  <section>
+    {{ utils.slide_header("Recap")}}
+    <ul>
+      <li class="fragment"><code>re</code> module is old</li>
+      <li class="fragment"><code>re</code> flags are unique</li>
+      <li class="fragment">Use <code>re.compile</code> but not for speed!</li>
+      <li class="fragment"><code>MatchObject</code> interface explained</li>
+    </ul>
+    {{ utils.notes_md("
+    Let's see what we've learned!
+    ")}}
+  </section>
+  <!-- Fin -->
+  <section>
+    <h1>Thanks!</h1>
+  </section>
+{% endblock %}

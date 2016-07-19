@@ -1,0 +1,85 @@
+{% macro naive_multiple_search() %}
+	<pre><code class="python">	re.search("God", kj_bible)
+	re.search("God", na_bible)
+	re.search("God", wsj) </code></pre>
+{% endmacro %}
+
+{% macro pattern_str_reuse() %}
+  <pre><code class="python">	pattern_str = 'God'
+	re.search(pattern_str, kj_bible)
+	re.search(pattern_str, na_bible) </code></pre>
+{% endmacro %}
+
+{% macro pattern_obj_reuse() %}
+  <pre><code class="python">	pattern_obj = re.compile("God")
+	pattern_obj.search(kj_bible)
+	pattern_obj.search(na_bible) </code></pre>
+{% endmacro %}
+
+{% macro re_flags_explore() %}
+  <pre class="fragment"> <code class="python">  re.IGNORECASE
+  2 </code> </pre>
+	<pre class="fragment"> <code class="python">  c = re.compile('God', re.IGNORECASE | re.UNICODE) </code> </pre>
+  <pre class="fragment"> <code class="python">  d = re.compile('God', re.I | re.UNICODE | re.MULTILINE) </code> </pre>
+{% endmacro %}
+
+{% macro re_I_ex() %}
+  <pre> <code class="python">  pattern_obj = re.compile('God', re.IGNORECASE) </code> </pre>
+{% endmacro %}
+
+{% macro binary_printer() %}
+	<pre><code class="python">  def print_8_bit(decimal):
+	print('{0:08b}'.format(decimal))</code></pre>
+{% endmacro %}
+
+{% macro re_I_8bit() %}
+	<pre><code class="python">  print_8_bit(re.IGNORECASE)
+  00000010</code></pre>
+{% endmacro %}
+
+{% macro two_flags_8bit() %}
+	<pre><code class="python">  print_8_bit(re.UNICODE)
+  00100000
+  print_8_bit(re.IGNORECASE | re.UNICODE)
+  00100010</code></pre>
+{% endmacro %}
+
+{% macro bad_groups_uses() %}
+	<pre><code class="python">  match.groups()[0]
+  match.groupdict()["group_name"] </code></pre>
+{% endmacro %}
+
+{% macro match_obj_example() %}
+	<pre><code data-noescape class="python">
+  named_group_rgx = re.compile("(?P&ltleads&gtGod) (?P&ltfollows&gt\w+)")
+  text = "In the beginning God created the heaven and the earth."
+  match = named_group_rgx.search(text)
+  match
+  <_sre.SRE_Match object; span=(17, 28), match='God created'>
+	</code></pre>
+{% endmacro %}
+
+{% macro total_match() %}
+	<pre><code class="python">  match.group()
+  "God created"
+  match.group(0)
+  "God created"</code></pre>
+{% endmacro %}
+
+{% macro individual_submatches() %}
+	<pre><code class="python">  match.group(1)
+  "God"
+  match.group(2)
+  "created"
+  match.group("leads")
+  "God"
+  match.group("follows")
+  "God"</code></pre>
+{% endmacro %}
+
+{% macro all_subgroups() %}
+	<pre><code class="python">  match.groups()
+  ("God", "created")
+  match.groupdict()
+  {"follows": "created", "leads": "God"}</code></pre>
+{% endmacro %}

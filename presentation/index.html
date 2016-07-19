@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/white.css">
+    <link rel="stylesheet" href="plugin/highlight/styles/googlecode.css">
+    <!-- Load my custom stuff last to override -->
+    <link rel="stylesheet" href="css/custom.css">
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+      
+  <!-- Title Slide -->
+  <section>
+    <h1> <var>re</var>-Discovering Python's Regular Expressions</h1>
+    <p>
+      Ilia Kurenkov
+    </p>
+    <p>
+      
+  
+  <a href="mailto:ilia.kurenkov@gmail.com">ilia.kurenkov@gmail.com</a>
+
+    </p>
+  </section>
+  <!-- Introduce Me -->
+  <section>
+    
+  <h3>Who am I?</h3>
+
+    <ul>
+      <li>
+        <div class="img-right">
+          MS Cognitive Systems (in progress)
+          
+  
+    <img src="images/2000px-Uni_Potsdam_logo.svg.png" alt="" class="no-border "
+    width="15%" height="15%">
+  
+
+        </div>
+      </li>
+      <li>OSS contributions: NLTK, CPython, matplotlib</li>
+      <li>
+        <div class="img-right">
+          eGym (working student)
+          
+  
+    <img src="images/eGym.svg" alt="" class="no-border "
+    width="25%" height="25%">
+  
+
+        </div>
+      </li>
+    </ul>
+
+  </section>
+  <!-- Introduce Topic -->
+  <section>
+    
+  <h3>What is this talk about?</h3>
+
+    <h5 style="text-align: left">Inspiration:</h5>
+    <p>
+      <em>Python's Hidden Regular Expression Gems</em> by Armin Ronacher
+    </p>
+    <div class="fragment">
+      <h5 style="text-align: left">Structure:</h5>
+      <ul>
+        <li>
+          Brief history of the module
+        </li>
+        <li>
+          To compile or not to compile?
+        </li>
+        <li><code>re</code>'s flags</li>
+        <li>match object interface</li>
+      </ul>
+    </div>
+    
+  <aside class="notes", data-markdown >
+    
+      AR: pocoo, ie flask, jinja2
+
+      using undocumented Scanner class for lexers
+    
+  </aside>
+
+  </section>
+  <!-- Timeline -->
+  <section>
+    
+  <h3>A Brief History</h3>
+
+    <ul>
+      <li>
+        <code>regex</code> module - like awk/egrep
+      </li>
+      <li>
+        Python 1.5: <code>re</code> module with <code>pre</code> backend.
+      </li>
+      <li>
+        Python 2.0: <code>pre</code> replaced by <code>sre</code>.
+      </li>
+      <li>
+        minor tweaks: unicode support, fixes
+      </li>
+      <li class="fragment">
+        2008-2011: failed comeback of <code>regex</code> module
+      </li>
+    </ul>
+    
+  <aside class="notes", data-markdown >
+    
+    Actually, current is 3rd take
+
+    Bottom line: it's old, before the formatting PEPs
+
+    C component and Py component, HARD to tell which is which
+
+    We will also see another quirk later
+    
+  </aside>
+
+  </section>
+  <!-- search for god -->
+  <section>
+    
+  <h3>Let's search for God!</h3>
+
+    <div class="fragment img-right" style="display: inline-block">
+      <div style="display: inline-block">
+      <p> King James Bible </p>
+      <ul>
+        <li>free to download</li>
+        <li>only 4MB text file</li>
+      </ul>
+      </div>
+      
+  
+    <img src="images/kjb-first-edition-titlepage.png" alt="" class="no-border "
+    width="25%" height="25%">
+  
+
+    </div>
+    <pre class="fragment"><code data-trim>
+      import re
+      re.search("God", kj_bible)
+    </code></pre>
+    
+  <aside class="notes", data-markdown >
+    
+    Say we got some results. That's cool
+
+    But we want to compare with other bibles!
+    
+  </aside>
+
+  </section>
+  <!-- What of other bibles? Naive multiple search -->
+  <section>
+    
+  <h3>Expanding the Search</h3>
+
+    
+	<pre><code class="python">	re.search("God", kj_bible)
+	re.search("God", na_bible)
+	re.search("God", wsj) </code></pre>
+
+  </section>
+  <!-- We can do better: reuse patterns! -->
+  <section>
+    
+  <h3>Reusing Patterns</h3>
+
+    <div>
+  <pre><code class="python">	pattern_str = 'God'
+	re.search(pattern_str, kj_bible)
+	re.search(pattern_str, na_bible) </code></pre>
+</div>
+    <div class="fragment">
+  <pre><code class="python">	pattern_obj = re.compile("God")
+	pattern_obj.search(kj_bible)
+	pattern_obj.search(na_bible) </code></pre>
+</div>
+    
+  <aside class="notes", data-markdown >
+    
+    We could save the string, reuse that
+
+    OR compile to pattern obj
+    
+  </aside>
+
+  </section>
+  <!-- Why Compile? -->
+  <section>
+    
+  <h3>Why compile?</h3>
+
+    <ul>
+      <li class="fragment">
+      You can change search scope:
+      <pre><code> pattern_obj.search('some long string', start_pos, end_pos) </code></pre>
+      </li>
+      <li class="fragment">
+        Readability.
+      </li>
+      <li class="fragment">
+        It's faster. <div class="fragment"><em>Or is it?</em></div>
+      </li>
+    </ul>
+  </section>
+  <!-- Compilation faster? -->
+  <section>
+    
+  <h3>Is <code>re.compile</code> faster?</h3>
+
+    <!-- The speed claim -->
+    <section>
+      <div class="fragment">
+        <h5>Slower</h5>
+        
+  <pre><code class="python">	pattern_str = 'God'
+	re.search(pattern_str, kj_bible)
+	re.search(pattern_str, na_bible) </code></pre>
+
+      </div>
+      <div class="fragment">
+        <h5>Faster</h5>
+        
+  <pre><code class="python">	pattern_obj = re.compile("God")
+	pattern_obj.search(kj_bible)
+	pattern_obj.search(na_bible) </code></pre>
+
+      </div>
+      
+  <aside class="notes", data-markdown >
+    
+        Let's investigate this claim using the implementation
+      
+  </aside>
+
+    </section>
+    <!-- re.search uses re._compile! -->
+    <section>
+      
+  
+    <img src="images/re.search.svg" alt="" class="no-border ">
+  
+
+      
+  
+    <img src="images/re.compile.svg" alt="" class="no-border fragment">
+  
+
+      
+  <aside class="notes", data-markdown >
+    
+      What does basic search do?
+
+      Seems like the answer is clear... until we look at _compile!
+      
+  </aside>
+
+    </section>
+    <!-- _compile uses cache! -->
+    <section>
+      
+  
+    <img src="images/re._compile.svg" alt="" class="no-border ">
+  
+
+
+      <div class="fragment">
+        
+  <pre><code class="python">	pattern_str = 'God'
+	re.search(pattern_str, kj_bible)
+	re.search(pattern_str, na_bible) </code></pre>
+
+      </div>
+
+      
+  <aside class="notes", data-markdown >
+    
+      _compile uses cache!
+
+      In the second re.search it hits the cache
+
+      Of course it's less reliable
+      
+  </aside>
+
+    </section>
+    <!-- Takeaway -->
+    <section>
+      <ul>
+        <li class="fragment">
+          <em>No</em> speed benefit if cache gets hit
+        </li>
+        <li class="fragment">
+          Slightly faster if cache is cleared
+        </li>
+        <li class="fragment">
+          For real speedup: optimize the <em>regular expressions</em>!
+        </li>
+      </ul>
+      
+  <aside class="notes", data-markdown >
+    
+      So we compile, live happily ever after
+
+      re.purge()
+      
+  </aside>
+
+    </section>
+  </section>
+  <!-- Flags! -->
+  <section>
+    <!-- <h3>How to handle this?</h3> -->
+    <blockquote>
+      Who am I, O Lord <mark>GOD</mark>?
+      and what is my house, that thou hast brought me hitherto?
+    </blockquote>
+    <div class="fragment">
+    <h5>Solution:</h5>
+    
+  <pre> <code class="python">  pattern_obj = re.compile('God', re.IGNORECASE) </code> </pre>
+
+    </div>
+    
+  <aside class="notes", data-markdown >
+    
+    One day you are skimming the bible
+
+    My regex don't catch that!
+    
+  </aside>
+
+  </section>
+  <section>
+    <!-- <h2>Flags</h2> -->
+    <section>
+      
+  <h3>What is <code>re.IGNORECASE</code>?</h3>
+
+      
+  <pre class="fragment"> <code class="python">  re.IGNORECASE
+  2 </code> </pre>
+	<pre class="fragment"> <code class="python">  c = re.compile('God', re.IGNORECASE | re.UNICODE) </code> </pre>
+  <pre class="fragment"> <code class="python">  d = re.compile('God', re.I | re.UNICODE | re.MULTILINE) </code> </pre>
+
+      
+  <aside class="notes", data-markdown >
+    
+      - Do we all know what that is?
+      - At first this didn't strike me as weird, then I thought about it
+        for a while...
+      - How often do you use this?
+      
+  </aside>
+
+    </section>
+    <!-- Bit-arrays explained -->
+    <section>
+      
+	<pre><code class="python">  def print_8_bit(decimal):
+	print('{0:08b}'.format(decimal))</code></pre>
+
+      
+	<pre><code class="python">  print_8_bit(re.IGNORECASE)
+  00000010</code></pre>
+
+      
+	<pre><code class="python">  print_8_bit(re.UNICODE)
+  00100000
+  print_8_bit(re.IGNORECASE | re.UNICODE)
+  00100010</code></pre>
+
+    </section>
+  </section>
+  <!-- Flags are rare in Python -->
+  <section>
+    
+  <h3>Intuition: bit array flags are uncommon!</h3>
+
+    <div class="img-right">
+      <div class="fragment">
+        
+  
+    <img src="images/08-cat-computer-superJumbo.jpg" alt="" class="no-border "
+    width="40%" height="40%">
+  
+
+        <p>
+          Validate by checking Standard Library
+        </p>
+      </div>
+      <p class="fragment">
+        <em>Only 2</em> of ~240 standard lib modules!!
+      </p>
+    </div>
+    <aside class="notes" data-markdown>
+      Also interesting: what kind of modules/funcs use these flags
+
+      Not a CS major, I find this cute
+    </aside>
+  </section>
+  <!-- Match Objects -->
+  <section>
+    
+  <h3>Match Objects</h3>
+
+    <ul>
+      <li class="fragment">Not saying anything new</li>
+      <li class="fragment">No gotchas, the docs are clear...</li>
+      <li class="fragment">... but somehow not memorable</li>
+      <li class="fragment">How to avoid this:
+      
+	<pre><code class="python">  match.groups()[0]
+  match.groupdict()["group_name"] </code></pre>
+
+      </li>
+      <li class="fragment">Simple succinct </li>
+    </ul>
+  </section>
+  <!-- example match objects -->
+  <section>
+    
+  <h3>An Example</h3>
+
+    
+	<pre><code data-noescape class="python">
+  named_group_rgx = re.compile("(?P&ltleads&gtGod) (?P&ltfollows&gt\w+)")
+  text = "In the beginning God created the heaven and the earth."
+  match = named_group_rgx.search(text)
+  match
+  <_sre.SRE_Match object; span=(17, 28), match='God created'>
+	</code></pre>
+
+    <ul>
+      <li class="fragment">Give me the whole matched string</li>
+      <li class="fragment">Give me one sub-group match.</li>
+      <li class="fragment">Give me all sub-group matches.</li>
+    </ul>
+    
+  <aside class="notes", data-markdown >
+    
+    total match includes stuff outside of patterns
+    
+  </aside>
+
+  </section>
+  <!-- Give me total matched string -->
+  <section>
+    
+  <h3>The Total Match</h3>
+
+
+    
+	<pre><code class="python">  match.group()
+  "God created"
+  match.group(0)
+  "God created"</code></pre>
+
+
+  </section>
+  <!-- Give me individual groups! -->
+  <section>
+    
+  <h3>Individual Subgroups</h3>
+
+
+    
+	<pre><code class="python">  match.group(1)
+  "God"
+  match.group(2)
+  "created"
+  match.group("leads")
+  "God"
+  match.group("follows")
+  "God"</code></pre>
+
+    
+  <aside class="notes", data-markdown >
+    
+    Still use .group
+
+    But with other indices
+
+    Or with names!
+  </aside>
+
+  </section>
+  <!-- Give me ALL the groups! -->
+  <section>
+    
+  <h3>All the Subgroups</h3>
+
+    
+	<pre><code class="python">  match.groups()
+  ("God", "created")
+  match.groupdict()
+  {"follows": "created", "leads": "God"}</code></pre>
+
+  </section>
+  <!-- Recap -->
+  <section>
+    
+  <h3>Recap</h3>
+
+    <ul>
+      <li class="fragment"><code>re</code> module is old</li>
+      <li class="fragment"><code>re</code> flags are unique</li>
+      <li class="fragment">Use <code>re.compile</code> but not for speed!</li>
+      <li class="fragment"><code>MatchObject</code> interface explained</li>
+    </ul>
+    
+  <aside class="notes", data-markdown >
+    
+    Let's see what we've learned!
+    
+  </aside>
+
+  </section>
+  <!-- Fin -->
+  <section>
+    <h1>Thanks!</h1>
+  </section>
+
+      </div>
+    </div>
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+    <script>
+      Reveal.initialize({
+        dependencies: [
+          // Cross-browser shim that fully implements classList - https://github.com/eligrey/classList.js/
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+
+          // Interpret Markdown in <section> elements
+          { src: 'plugin/markdown/marked.js', condition: function() {
+            return !!document.querySelector( '[data-markdown]' );
+          } },
+          { src: 'plugin/markdown/markdown.js', condition: function() {
+            return !!document.querySelector( '[data-markdown]' );
+          } },
+
+          // Syntax highlight for <code> elements
+          { src: 'plugin/highlight/highlight.pack.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+
+          // Zoom in and out with Alt+click
+          // { src: 'plugin/zoom-js/zoom.js', async: true },
+
+          // Speaker notes
+          { src: 'plugin/notes/notes.js', async: true },
+
+          // MathJax
+          // { src: 'plugin/math/math.js', async: true }
+
+          // Chalkboard Plugin
+          { src: 'plugin/chalkboard/chalkboard.js' },
+        ],
+        // Chalkboard shortcuts
+        keyboard: {
+          67: function() { RevealChalkboard.toggleNotesCanvas() },    // toggle notes canvas when 'c' is pressed
+          66: function() { RevealChalkboard.toggleChalkboard() }, // toggle chalkboard when 'b' is pressed
+          46: function() { RevealChalkboard.clear() },    // clear chalkboard when 'DEL' is pressed
+           8: function() { RevealChalkboard.reset() },    // reset chalkboard data on current slide when 'BACKSPACE' is pressed
+          68: function() { RevealChalkboard.download() }, // downlad recorded chalkboard drawing when 'd' is pressed
+      },
+      // Switch Chalkboard to Whiteboard
+      chalkboard: {
+        theme: "whiteboard",
+        readOnly: false,
+      },
+      });
+    </script>
+  </body>
+</html>

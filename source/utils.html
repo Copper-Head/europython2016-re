@@ -1,0 +1,37 @@
+{% macro markdown_slide(text) %}
+  <section data-markdown>
+    <script type="text/template">
+      {{ text }}
+    </script>
+  </section>
+{% endmacro %}
+
+{% macro code(code_text) %}
+  <pre>
+    <code data-trim data-noencode> {{ code_text }} </code>
+  </pre>
+{% endmacro %}
+
+{% macro email(address, text="") %}
+  {% set link_text = text if text else address %}
+  <a href="mailto:{{address}}">{{link_text}}</a>
+{% endmacro %}
+
+{% macro notes_md(text, attrs="data-markdown") %}
+  <aside class="notes", {{ attrs }} >
+    {{ text }}
+  </aside>
+{% endmacro %}
+
+{% macro image_no_bdr(path, scale="", classes="") %}
+  {% if not scale %}
+    <img src="{{ path }}" alt="" class="no-border {{ classes }}">
+  {% else %}
+    <img src="{{ path }}" alt="" class="no-border {{ classes }}"
+    width="{{scale}}" height="{{scale}}">
+  {% endif %}
+{% endmacro %}
+
+{% macro slide_header(text) %}
+  <h3>{{ text }}</h3>
+{% endmacro %}
