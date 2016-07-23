@@ -5,7 +5,7 @@
 {% block slides %}
   <!-- Title Slide -->
   <section>
-    <h1> <var>re</var>-Discovering Python's Regular Expressions</h1>
+    {{ utils.slide_header("<code>re</code>-Discovering Python's Regular Expressions")}}
     <p>
       Ilia Kurenkov
     </p>
@@ -64,7 +64,7 @@
     {{ utils.slide_header("A Brief History")}}
     <ul>
       <li>
-        <code>regex</code> module - like awk/egrep
+        <code>regex</code> module - like awk/grep
       </li>
       <li>
         Python 1.5: <code>re</code> module with <code>pre</code> backend.
@@ -74,9 +74,6 @@
       </li>
       <li>
         minor tweaks: unicode support, fixes
-      </li>
-      <li class="fragment">
-        2008-2011: failed comeback of <code>regex</code> module
       </li>
     </ul>
     {{ utils.notes_md("
@@ -256,6 +253,9 @@
       </div>
       <p class="fragment">
         <em>Only 2</em> of ~240 standard lib modules!!
+      </p>
+      <p class="fragment">
+        Relic from an older time.
       </p>
     </div>
     <aside class="notes" data-markdown>
